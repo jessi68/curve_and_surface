@@ -338,8 +338,8 @@ namespace
 
         // Compile the display lists
 
+        // gCtrlPoints 출력해보기 
         // if beizer then drawCurve(evalBeizer(glCtrlPoints[0], 3);
-
         
         glNewList(gCurveLists[1], GL_COMPILE);
         {

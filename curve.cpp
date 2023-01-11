@@ -28,7 +28,6 @@ void initialize()
     }
 }
 
-
 int binomialCoefficient(int n, int k) {
     if (dp[n][k] != -1) {
         return dp[n][k];
@@ -47,14 +46,33 @@ Vector3f linearCombination(const vector< Vector3f >& points, float t) {
     Vector3f result = Vector3f(0, 0, 0);
     int degree = points.size() - 1;
     int currentDegree = degree;
+    int currentOrder = 0;
     float coefficient;
 
-    for (const auto point : points) {
-        coefficient = pow(1 - t, currentDegree)  * pow(t, degree - currentDegree);
+    for (const auto& point : points) {
+        coefficient = pow(1 - t, currentDegree)  * pow(t, currentOrder) * binomialCoefficient(degree, currentOrder);
         result += point * coefficient;
         currentDegree -= 1;
+        currentOrder += 1;
     }
 
+    return result;
+}
+
+Vector3f tangentOfBeizer(const vector< Vector3f >& points, float t) {
+    Vector3f result = Vector3f(0, 0, 0);
+    float coefficient;
+    int size = points.size();
+    int degree = size - 1;
+
+    for (int i = 0; i <= degree - 1; i++) {
+        result += binomialCoefficient(degree - 1, i) * size * (points[i + 1] - points[i]);
+    }
+    return result;
+}
+
+Vector3f normalOfBeizer(const vector< Vector3f >& points, float t) {
+    Vector3f result = Vector3f(0, 0, 0);
     return result;
 }
 
@@ -77,6 +95,11 @@ Curve evalBezier( const vector< Vector3f >& points, unsigned steps )
         // step from 0 to 2pi
         float t = float(i) / steps;
         Bezier[i].V = linearCombination(points, t);
+        Bezier[i].T = tangentOfBeizer(points, t);
+        // Finally, binormal is facing up.
+        Bezier[i].B = Vector3f(0, 0, 1);
+        Bezier[i].N = Vector3f::cross(Bezier[i].B, Bezier[i].T);
+
 
         // Tangent vector is first derivative
         /*R[i].T = Vector3f(-sin(t), cos(t), 0);
@@ -84,8 +107,7 @@ Curve evalBezier( const vector< Vector3f >& points, unsigned steps )
         // Normal vector is second derivative
         R[i].N = Vector3f(-cos(t), -sin(t), 0);
 
-        // Finally, binormal is facing up.
-        R[i].B = Vector3f(0, 0, 1);*/
+        ;*/
 
 
         // Initialize position
