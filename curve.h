@@ -46,4 +46,6 @@ Curve evalCircle( float radius, unsigned steps);
 // If framesize == 0, then no frames are drawn.  Otherwise, drawn.
 void drawCurve( const Curve& curve, float framesize = 0 );
 
+void initialize();
+
 #endif

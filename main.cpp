@@ -328,6 +328,7 @@ namespace
 
     void makeDisplayLists()
     {
+        initialize();
         gCurveLists[1] = glGenLists(1);
         gCurveLists[2] = glGenLists(1);
         gSurfaceLists[1] = glGenLists(1);
@@ -338,6 +339,7 @@ namespace
         // Compile the display lists
 
         // if beizer then drawCurve(evalBeizer(glCtrlPoints[0], 3);
+
         
         glNewList(gCurveLists[1], GL_COMPILE);
         {

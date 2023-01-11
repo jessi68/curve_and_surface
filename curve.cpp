@@ -15,15 +15,57 @@ namespace
         const float eps = 1e-8f;
         return ( lhs - rhs ).absSquared() < eps;
     }
+    int DP_SIZE = 1001;
+    int dp[1001][1001];
+}
 
-    
+void initialize()
+{
+    for (int i = 0; i < DP_SIZE; i++) {
+        for (int j = 0; j < DP_SIZE; j++) {
+            dp[i][j] = -1;
+        }
+    }
+}
+
+
+int binomialCoefficient(int n, int k) {
+    if (dp[n][k] != -1) {
+        return dp[n][k];
+    }
+
+    if (k == 0 || k == n) {
+        dp[n][k] = 1;
+        return dp[n][k];
+    }
+
+    dp[n][k] = binomialCoefficient(n - 1, k - 1) + binomialCoefficient(n - 1, k);
+    return dp[n][k];
 }
     
+Vector3f linearCombination(const vector< Vector3f >& points, float t) {
+    Vector3f result = Vector3f(0, 0, 0);
+    int degree = points.size() - 1;
+    int currentDegree = degree;
+    float coefficient;
 
-Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
+    for (const auto point : points) {
+        coefficient = pow(1 - t, currentDegree)  * pow(t, degree - currentDegree);
+        result += point * coefficient;
+        currentDegree -= 1;
+    }
+
+    return result;
+}
+
+Curve evalBezier( const vector< Vector3f >& points, unsigned steps )
 {
     // Check
-    if( P.size() < 4 || P.size() % 3 != 1 )
+    // 4, 7, 10, 13 
+    Curve Bezier(steps + 1);
+    int orderOfCurve = points.size();
+
+    if( orderOfCurve < 4 || orderOfCurve % 3 != 1 )
     {
         cerr << "evalBezier must be called with 3n+1 control points." << endl;
         exit( 0 );
@@ -32,6 +74,23 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
     Curve bezier(steps + 1);
 
     for (unsigned i = 0; i <= steps; i++) {
+        // step from 0 to 2pi
+        float t = float(i) / steps;
+        Bezier[i].V = linearCombination(points, t);
+
+        // Tangent vector is first derivative
+        /*R[i].T = Vector3f(-sin(t), cos(t), 0);
+
+        // Normal vector is second derivative
+        R[i].N = Vector3f(-cos(t), -sin(t), 0);
+
+        // Finally, binormal is facing up.
+        R[i].B = Vector3f(0, 0, 1);*/
+
+
+        // Initialize position
+        // We're pivoting counterclockwise around the y-axis
+        //R[i].V = radius * Vector3f(cos(t), sin(t), 0);
 
     }
 
@@ -55,9 +114,9 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
     cerr << "\t>>> evalBezier has been called with the following input:" << endl;
 
     cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
-    for( unsigned i = 0; i < P.size(); ++i )
+    for( unsigned i = 0; i < points.size(); ++i )
     {
-        cerr << "\t>>> " << P[i] << endl;
+        cerr << "\t>>> " << points[i] << endl;
     }
 
     cerr << "\t>>> Steps (type steps): " << steps << endl;
