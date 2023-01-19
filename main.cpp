@@ -302,7 +302,7 @@ namespace
                         prefix + string("_")
                         + gSurfaceNames[i]
                         + string(".obj");
-
+                    
                     ofstream out(filename.c_str());
 
                     if (!out)
@@ -339,18 +339,17 @@ namespace
         // Compile the display lists
 
         // gCtrlPoints 출력해보기 
-        // if beizer then drawCurve(evalBeizer(glCtrlPoints[0], 3);
-        
+     
         glNewList(gCurveLists[1], GL_COMPILE);
         {
-            for (unsigned i=0; i<gCurves.size(); i++)
+            for (unsigned i = 0; i<gCurves.size(); i++)
                 drawCurve(gCurves[i], 0.0);
         }
         glEndList();
                 
         glNewList(gCurveLists[2], GL_COMPILE);
         {
-            for (unsigned i=0; i<gCurves.size(); i++)
+            for (unsigned i = 0; i<gCurves.size(); i++)
                 drawCurve(gCurves[i], gLineLen);
         }
         glEndList();
@@ -399,13 +398,14 @@ namespace
         }
         glEndList();
 
+
         glNewList(gPointList, GL_COMPILE);
         {
             // Save current state of OpenGL
             glPushAttrib(GL_ALL_ATTRIB_BITS);
 
             // Setup for point drawing
-            glDisable(GL_LIGHTING);    
+            glDisable(GL_LIGHTING);
             glColor4f(1,1,0.0,1);
             glPointSize(4);
             glLineWidth(1);
@@ -422,10 +422,11 @@ namespace
                     glVertex(gCtrlPoints[i][j]);
                 glEnd();
             }
-            
+
             glPopAttrib();
-        }
+
         glEndList();
+        }
 
     }
     

@@ -16,30 +16,30 @@ namespace
         return ( lhs - rhs ).absSquared() < eps;
     }
     int DP_SIZE = 1001;
-    int dp[1001][1001];
+    int dpoints[1001][1001];
 }
 
 void initialize()
 {
     for (int i = 0; i < DP_SIZE; i++) {
         for (int j = 0; j < DP_SIZE; j++) {
-            dp[i][j] = -1;
+            dpoints[i][j] = -1;
         }
     }
 }
 
 int binomialCoefficient(int n, int k) {
-    if (dp[n][k] != -1) {
-        return dp[n][k];
+    if (dpoints[n][k] != -1) {
+        return dpoints[n][k];
     }
 
     if (k == 0 || k == n) {
-        dp[n][k] = 1;
-        return dp[n][k];
+        dpoints[n][k] = 1;
+        return dpoints[n][k];
     }
 
-    dp[n][k] = binomialCoefficient(n - 1, k - 1) + binomialCoefficient(n - 1, k);
-    return dp[n][k];
+    dpoints[n][k] = binomialCoefficient(n - 1, k - 1) + binomialCoefficient(n - 1, k);
+    return dpoints[n][k];
 }
     
 Vector3f linearCombination(const vector< Vector3f >& points, float t) {
@@ -76,45 +76,84 @@ Vector3f normalOfBeizer(const vector< Vector3f >& points, float t) {
     return result;
 }
 
-Curve evalBezier( const vector< Vector3f >& points, unsigned steps )
+Curve evalBezier(const vector< Vector3f >& points, unsigned steps)
 {
     // Check
     // 4, 7, 10, 13 
-    Curve Bezier(steps + 1);
+    //Curve Bezier(steps + 1);
     int orderOfCurve = points.size();
-
-    if( orderOfCurve < 4 || orderOfCurve % 3 != 1 )
+    cout << orderOfCurve << endl;
+    if (orderOfCurve < 4 || orderOfCurve % 3 != 1)
     {
         cerr << "evalBezier must be called with 3n+1 control points." << endl;
-        exit( 0 );
+        exit(0);
     }
 
-    Curve bezier(steps + 1);
-
-    for (unsigned i = 0; i <= steps; i++) {
-        // step from 0 to 2pi
-        float t = float(i) / steps;
-        Bezier[i].V = linearCombination(points, t);
-        Bezier[i].T = tangentOfBeizer(points, t);
-        // Finally, binormal is facing up.
-        Bezier[i].B = Vector3f(0, 0, 1);
-        Bezier[i].N = Vector3f::cross(Bezier[i].B, Bezier[i].T);
-
-
-        // Tangent vector is first derivative
-        /*R[i].T = Vector3f(-sin(t), cos(t), 0);
-
-        // Normal vector is second derivative
-        R[i].N = Vector3f(-cos(t), -sin(t), 0);
-
-        ;*/
-
-
-        // Initialize position
-        // We're pivoting counterclockwise around the y-axis
-        //R[i].V = radius * Vector3f(cos(t), sin(t), 0);
-
+    int seg;			//Determine number of segments if 4 or 
+    //more control points
+    if (points.size() == 4) {
+        seg = 1;
     }
+    else {
+        seg = ((points.size() - 1) / 3);
+    }
+
+    Curve R((seg) * (steps)+1);
+
+    Vector3f initialBinormal;		//Initial Binormal (arbitrary only at beginning)
+    Vector3f recentBinormal;		//Most recent Binormal
+
+    bool beginning = true;
+
+    recentBinormal = Vector3f(0, 0, 1);
+
+    for (unsigned i = 0; i < orderOfCurve - 3; i += 3)
+    {
+
+        Matrix4f vertexMatrix;
+        Matrix3f tangentMatrix;
+        Matrix2f normalMatrix;
+        Vector4f time;
+        Matrix4f controlPoints;
+        Matrix3f diffOfControlPoints;
+
+        Vector4f vertexResult;
+        int currentIndex;
+
+        for (unsigned delta = 0; delta <= steps; delta += 1)
+        {
+            float t = float(delta) / steps;
+            vertexMatrix = Matrix4f(1, -3, 3, -1,
+                0, 3, -6, 3,
+                0, 0, 3, -3,
+                0, 0, 0, 1);
+            tangentMatrix = Matrix3f(3, -6, 3,
+                0, 6, -6,
+                0, 0, 3);
+            time = Vector4f(1, t, t * t, t * t * t);
+            controlPoints = Matrix4f(points[i + 0][0], points[i + 1][0], points[i + 2][0], points[i + 3][0],
+                points[i + 0][1], points[i + 1][1], points[i + 2][1], points[i + 3][1],
+                points[i + 0][2], points[i + 1][2], points[i + 2][2], points[i + 3][2],
+                0, 0, 0, 0);
+            diffOfControlPoints = Matrix3f(points[i + 1] - points[i], points[i + 2] - points[i + 1], points[i + 3] - points[i + 2], true);
+            // T is transpose Matrix 
+            // in opengl column first so we have to take transpose matix 
+            // (time * vertexMatrix * controlPoints)T = (controlPoints)T * (vertexMatrix)T * (time)T 
+            vertexResult = (controlPoints * vertexMatrix * time);
+
+            currentIndex = i * steps + delta;
+            R[currentIndex].V = vertexResult.xyz();
+            R[currentIndex].T = (diffOfControlPoints * tangentMatrix * time.xyz()).normalized();
+            // infection point 방지 위해 
+            // 또한 직선운동일 때, N 은 0 이 되버림 
+            R[currentIndex].N = Vector3f::cross(recentBinormal, R[currentIndex].T).normalized();
+            R[currentIndex].B = Vector3f::cross(R[currentIndex].T, R[currentIndex].N).normalized();
+            recentBinormal = R[currentIndex].B;
+            beginning = false;
+        }
+    }
+
+    return R;
 
     // TODO:
     // You should implement this function so that it returns a Curve
@@ -133,19 +172,6 @@ Curve evalBezier( const vector< Vector3f >& points, unsigned steps )
     // receive have G1 continuity.  Otherwise, the TNB will not be
     // be defined at points where this does not hold.
 
-    cerr << "\t>>> evalBezier has been called with the following input:" << endl;
-
-    cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
-    for( unsigned i = 0; i < points.size(); ++i )
-    {
-        cerr << "\t>>> " << points[i] << endl;
-    }
-
-    cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning empty curve." << endl;
-
-    // Right now this will just return this empty curve.
-    return Curve();
 }
 
 Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
@@ -219,16 +245,20 @@ void drawCurve( const Curve& curve, float framesize )
     glLineWidth( 1 );
     
     // Draw curve
-    glBegin( GL_LINE_STRIP );
+    
     cout << curve.size();
     cout << "draw curve" << endl;
-    for( unsigned i = 0; i < curve.size(); ++i )
+
+    
+    glBegin(GL_LINE_STRIP);
+    for (unsigned i = 0; i < curve.size(); ++i)
     {
-        glVertex( curve[ i ].V );
+        cout << "curve coordinate";
+        cout << curve[i].V.x() << " " << curve[i].V.y() << curve[i].V.z() << endl;
+        glVertex(curve[i].V);
     }
     glEnd();
-
-    glLineWidth( 1 );
+    
 
     // Draw coordinate frames if framesize nonzero
     cout << framesize << endl;
@@ -243,7 +273,7 @@ void drawCurve( const Curve& curve, float framesize )
             M.setCol( 1, Vector4f( curve[i].B, 0 ) );
             M.setCol( 2, Vector4f( curve[i].T, 0 ) );
             M.setCol( 3, Vector4f( curve[i].V, 1 ) );
-
+            
             glPushMatrix();
             glMultMatrixf( M );
             glScaled( framesize, framesize, framesize );

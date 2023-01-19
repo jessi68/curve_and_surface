@@ -12,6 +12,7 @@ namespace {
         unsigned n;
         in >> n;
 
+
         cerr << "  " << n << " cps" << endl;
     
         // vector of control points
@@ -46,11 +47,12 @@ namespace {
             }
         }
 
+        for (auto v : cps) {
+            cout << "x: " << v.x() << " y: " << v.y() << "z: " << v.z() << endl;
+        }
         return cps;
     }
 }
-
-
 
 bool parseFile(istream &in,
                vector<vector<Vector3f> > &ctrlPoints, 
@@ -80,6 +82,7 @@ bool parseFile(istream &in,
     
     while (in >> objType) 
     {
+
         cerr << ">object " << counter++ << endl;
         string objName;
         in >> objName;
@@ -94,14 +97,14 @@ bool parseFile(istream &in,
             cerr << "error, [" << objName << "] already exists" << endl;
             return false;
         }
-
+        
         unsigned steps;
 
         if (objType == "bez2")
         {
             in >> steps;
             cerr << " reading bez2 " << "[" << objName << "]" << endl;
-            curves.push_back( evalBezier(cpsToAdd = readCps(in, 2), steps) );
+            curves.push_back(evalBezier(cpsToAdd = readCps(in, 2), steps) );
             curveNames.push_back(objName);
             dims.push_back(2);
             if (named) curveIndex[objName] = dims.size()-1;
