@@ -83,13 +83,15 @@ Curve evalBezier(const vector< Vector3f >& points, unsigned steps)
     //Curve Bezier(steps + 1);
     int orderOfCurve = points.size();
     cout << orderOfCurve << endl;
+    cout << "is bezier called" << endl;
     if (orderOfCurve < 4 || orderOfCurve % 3 != 1)
     {
         cerr << "evalBezier must be called with 3n+1 control points." << endl;
         exit(0);
     }
 
-    int seg;			//Determine number of segments if 4 or 
+    int seg;			
+    //Determine number of segments if 4 or 
     //more control points
     if (points.size() == 4) {
         seg = 1;
@@ -103,9 +105,8 @@ Curve evalBezier(const vector< Vector3f >& points, unsigned steps)
     Vector3f initialBinormal;		//Initial Binormal (arbitrary only at beginning)
     Vector3f recentBinormal;		//Most recent Binormal
 
-    bool beginning = true;
-
     recentBinormal = Vector3f(0, 0, 1);
+    int segment = 0;
 
     for (unsigned i = 0; i < orderOfCurve - 3; i += 3)
     {
@@ -119,7 +120,7 @@ Curve evalBezier(const vector< Vector3f >& points, unsigned steps)
 
         Vector4f vertexResult;
         int currentIndex;
-
+        
         for (unsigned delta = 0; delta <= steps; delta += 1)
         {
             float t = float(delta) / steps;
@@ -135,13 +136,21 @@ Curve evalBezier(const vector< Vector3f >& points, unsigned steps)
                 points[i + 0][1], points[i + 1][1], points[i + 2][1], points[i + 3][1],
                 points[i + 0][2], points[i + 1][2], points[i + 2][2], points[i + 3][2],
                 0, 0, 0, 0);
+            
             diffOfControlPoints = Matrix3f(points[i + 1] - points[i], points[i + 2] - points[i + 1], points[i + 3] - points[i + 2], true);
             // T is transpose Matrix 
             // in opengl column first so we have to take transpose matix 
             // (time * vertexMatrix * controlPoints)T = (controlPoints)T * (vertexMatrix)T * (time)T 
             vertexResult = (controlPoints * vertexMatrix * time);
 
-            currentIndex = i * steps + delta;
+            cout << i << " i " << endl;
+            cout << steps << endl;
+            cout << delta << endl;
+            currentIndex = steps * segment + delta;
+        
+            if (currentIndex >= R.size()) {
+                break;
+            }
             R[currentIndex].V = vertexResult.xyz();
             R[currentIndex].T = (diffOfControlPoints * tangentMatrix * time.xyz()).normalized();
             // infection point 방지 위해 
@@ -149,28 +158,11 @@ Curve evalBezier(const vector< Vector3f >& points, unsigned steps)
             R[currentIndex].N = Vector3f::cross(recentBinormal, R[currentIndex].T).normalized();
             R[currentIndex].B = Vector3f::cross(R[currentIndex].T, R[currentIndex].N).normalized();
             recentBinormal = R[currentIndex].B;
-            beginning = false;
         }
+        segment += 1;
     }
 
     return R;
-
-    // TODO:
-    // You should implement this function so that it returns a Curve
-    // (e.g., a vector< CurvePoint >).  The variable "steps" tells you
-    // the number of points to generate on each piece of the spline.
-    // At least, that's how the sample solution is implemented and how
-    // the SWP files are written.  But you are free to interpret this
-    // variable however you want, so long as you can control the
-    // "resolution" of the discretized spline curve with it.
-
-    // Make sure that this function computes all the appropriate
-    // Vector3fs for each CurvePoint: V,T,N,B.
-    // [NBT] should be unit and orthogonal.
-
-    // Also note that you may assume that all Bezier curves that you
-    // receive have G1 continuity.  Otherwise, the TNB will not be
-    // be defined at points where this does not hold.
 
 }
 
@@ -244,7 +236,9 @@ void drawCurve( const Curve& curve, float framesize )
     glColor4f( 1, 1, 1, 1 );
     glLineWidth( 1 );
     
-    // Draw curve
+    // 
+
+
     
     cout << curve.size();
     cout << "draw curve" << endl;

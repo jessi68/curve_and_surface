@@ -285,6 +285,7 @@ namespace
             exit(-1);              
         }
 
+
         in.close();
 
         // This does OBJ file output
