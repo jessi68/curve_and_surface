@@ -19,63 +19,6 @@ namespace
     int dpoints[1001][1001];
 }
 
-void initialize()
-{
-    for (int i = 0; i < DP_SIZE; i++) {
-        for (int j = 0; j < DP_SIZE; j++) {
-            dpoints[i][j] = -1;
-        }
-    }
-}
-
-int binomialCoefficient(int n, int k) {
-    if (dpoints[n][k] != -1) {
-        return dpoints[n][k];
-    }
-
-    if (k == 0 || k == n) {
-        dpoints[n][k] = 1;
-        return dpoints[n][k];
-    }
-
-    dpoints[n][k] = binomialCoefficient(n - 1, k - 1) + binomialCoefficient(n - 1, k);
-    return dpoints[n][k];
-}
-    
-Vector3f linearCombination(const vector< Vector3f >& points, float t) {
-    Vector3f result = Vector3f(0, 0, 0);
-    int degree = points.size() - 1;
-    int currentDegree = degree;
-    int currentOrder = 0;
-    float coefficient;
-
-    for (const auto& point : points) {
-        coefficient = pow(1 - t, currentDegree)  * pow(t, currentOrder) * binomialCoefficient(degree, currentOrder);
-        result += point * coefficient;
-        currentDegree -= 1;
-        currentOrder += 1;
-    }
-
-    return result;
-}
-
-Vector3f tangentOfBeizer(const vector< Vector3f >& points, float t) {
-    Vector3f result = Vector3f(0, 0, 0);
-    float coefficient;
-    int size = points.size();
-    int degree = size - 1;
-
-    for (int i = 0; i <= degree - 1; i++) {
-        result += binomialCoefficient(degree - 1, i) * size * (points[i + 1] - points[i]);
-    }
-    return result;
-}
-
-Vector3f normalOfBeizer(const vector< Vector3f >& points, float t) {
-    Vector3f result = Vector3f(0, 0, 0);
-    return result;
-}
-
 Curve evalBezier(const vector< Vector3f >& points, unsigned steps)
 {
     // Check
@@ -261,7 +204,7 @@ void drawCurve( const Curve& curve, float framesize )
     {
         Matrix4f M;
 
-        for( unsigned i = 0; i < curve.size(); ++i )
+        for (unsigned i = 0; i < curve.size(); ++i)
         {
             M.setCol( 0, Vector4f( curve[i].N, 0 ) );
             M.setCol( 1, Vector4f( curve[i].B, 0 ) );
