@@ -109,33 +109,98 @@ Curve evalBezier(const vector< Vector3f >& points, unsigned steps)
 
 }
 
-Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
+Curve evalBspline( const vector< Vector3f >& points, unsigned steps )
 {
-    // Check
-    if( P.size() < 4 )
-    {
-        cerr << "evalBspline must be called with 4 or more control points." << endl;
-        exit( 0 );
-    }
 
     // TODO:
     // It is suggested that you implement this function by changing
     // basis from B-spline to Bezier.  That way, you can just call
     // your evalBezier function.
 
-    cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
-
-    cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
-    for( unsigned i = 0; i < P.size(); ++i )
+    // Check
+    // 4, 7, 10, 13 
+    int orderOfCurve = points.size();
+    cout << orderOfCurve << endl;
+    cout << "is bspline called" << endl;
+    if (orderOfCurve < 4 || orderOfCurve % 3 != 1)
     {
-        cerr << "\t>>> " << P[i] << endl;
+        cerr << "evalBspline must be called with 3n+1 control points." << endl;
+        exit(0);
     }
-    
-    cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning empty curve." << endl;
 
-    // Return an empty curve right now.
-    return Curve();
+    int seg;
+    //Determine number of segments if 4 or 
+    //more control points
+    if (points.size() == 4) {
+        seg = 1;
+    }
+    else {
+        seg = ((points.size() - 1) / 3);
+    }
+
+    Curve R((seg) * (steps)+1);
+
+    Vector3f initialBinormal;		//Initial Binormal (arbitrary only at beginning)
+    Vector3f recentBinormal;		//Most recent Binormal
+
+    recentBinormal = Vector3f(0, 0, 1);
+    int segment = 0;
+    
+    for (unsigned i = 0; i < orderOfCurve - 3; i += 3)
+    {
+
+        Matrix4f vertexMatrix;
+        Matrix3f tangentMatrix;
+        Matrix2f normalMatrix;
+        Vector4f time;
+        Matrix4f controlPoints;
+        Matrix3f diffOfControlPoints;
+
+        Vector4f vertexResult;
+        int currentIndex;
+
+        for (unsigned delta = 0; delta <= steps; delta += 1)
+        {
+            float t = float(delta) / steps;
+            vertexMatrix = Matrix4f(1, -3, 3, -1,
+                0, 3, -6, 3,
+                0, 0, 3, -3,
+                0, 0, 0, 1);
+            tangentMatrix = Matrix3f(3, -6, 3,
+                0, 6, -6,
+                0, 0, 3);
+            time = Vector4f(1, t, t * t, t * t * t);
+            controlPoints = Matrix4f(points[i + 0][0], points[i + 1][0], points[i + 2][0], points[i + 3][0],
+                points[i + 0][1], points[i + 1][1], points[i + 2][1], points[i + 3][1],
+                points[i + 0][2], points[i + 1][2], points[i + 2][2], points[i + 3][2],
+                0, 0, 0, 0);
+
+            diffOfControlPoints = Matrix3f(points[i + 1] - points[i], points[i + 2] - points[i + 1], points[i + 3] - points[i + 2], true);
+            // T is transpose Matrix 
+            // in opengl column first so we have to take transpose matix 
+            // (time * vertexMatrix * controlPoints)T = (controlPoints)T * (vertexMatrix)T * (time)T 
+            vertexResult = (controlPoints * vertexMatrix * time);
+
+            cout << i << " i " << endl;
+            cout << steps << endl;
+            cout << delta << endl;
+            currentIndex = steps * segment + delta;
+
+            if (currentIndex >= R.size()) {
+                break;
+            }
+            R[currentIndex].V = vertexResult.xyz();
+            R[currentIndex].T = (diffOfControlPoints * tangentMatrix * time.xyz()).normalized();
+            // infection point 방지 위해 
+            // 또한 직선운동일 때, N 은 0 이 되버림 
+            R[currentIndex].N = Vector3f::cross(recentBinormal, R[currentIndex].T).normalized();
+            R[currentIndex].B = Vector3f::cross(R[currentIndex].T, R[currentIndex].N).normalized();
+            recentBinormal = R[currentIndex].B;
+        }
+        segment += 1;
+    }
+
+    return R;
 }
 
 Curve evalCircle( float radius, unsigned steps )
@@ -179,13 +244,9 @@ void drawCurve( const Curve& curve, float framesize )
     glColor4f( 1, 1, 1, 1 );
     glLineWidth( 1 );
     
-    // 
-
-
-    
     cout << curve.size();
     cout << "draw curve" << endl;
-
+    
     
     glBegin(GL_LINE_STRIP);
     for (unsigned i = 0; i < curve.size(); ++i)
@@ -194,33 +255,48 @@ void drawCurve( const Curve& curve, float framesize )
         cout << curve[i].V.x() << " " << curve[i].V.y() << curve[i].V.z() << endl;
         glVertex(curve[i].V);
     }
+
     glEnd();
     
 
+    /*glBegin(GL_LINE_STRIP);
+    glLineWidth(1);
+    glColor4f(1, 0, 0, 1);
+    glVertex(Vector3f(0, 0, 1));
+    glVertex(Vector3f(0, 0, 1.3));
+    glEnd();*/
+
     // Draw coordinate frames if framesize nonzero
+    cout << "framesiize" << endl;
     cout << framesize << endl;
-    cout << "currve" << endl;
-    if( framesize != 0.0f )
-    {
-        Matrix4f M;
 
         for (unsigned i = 0; i < curve.size(); ++i)
         {
-            M.setCol( 0, Vector4f( curve[i].N, 0 ) );
-            M.setCol( 1, Vector4f( curve[i].B, 0 ) );
-            M.setCol( 2, Vector4f( curve[i].T, 0 ) );
-            M.setCol( 3, Vector4f( curve[i].V, 1 ) );
-            
-            glPushMatrix();
-            glMultMatrixf( M );
-            glScaled( framesize, framesize, framesize );
-            glBegin( GL_LINES );
-            glColor3f( 1, 0, 0 ); glVertex3d( 0, 0, 0 ); glVertex3d( 1, 0, 0 );
-            glColor3f( 0, 1, 0 ); glVertex3d( 0, 0, 0 ); glVertex3d( 0, 1, 0 );
-            glColor3f( 0, 0, 1 ); glVertex3d( 0, 0, 0 ); glVertex3d( 0, 0, 1 );
+            cout << "drawing line" << endl;
+            // red normal
+            glBegin(GL_LINE_STRIP);
+            glLineWidth(1);
+            glColor4f( 1, 0, 0, 1);
+            Vector3f vertex = curve[i].V;
+            Vector4f normalLineEnd = vertex + curve[i].N;
+            glVertex(vertex);
+            glVertex(normalLineEnd.xyz());
             glEnd();
-            glPopMatrix();
-        }
+            cout << normalLineEnd.x() << " y:" << normalLineEnd.y() << " z :" << normalLineEnd.z() << endl;
+            // green tangent
+            glBegin(GL_LINE_STRIP);
+            glColor4f( 0, 1, 0, 1); 
+            glVertex(vertex);
+            Vector4f tangentLineEnd = vertex + curve[i].T;
+            glVertex(tangentLineEnd.xyz());
+            glEnd();
+            // blue binormal
+            glBegin(GL_LINE_STRIP);
+            glColor4f( 0, 0, 1, 1 );
+            glVertex(vertex);
+            Vector4f binormalLineEnd = vertex + curve[i].B;
+            glVertex(binormalLineEnd.xyz());
+            glEnd();
     }
     
     // Pop state

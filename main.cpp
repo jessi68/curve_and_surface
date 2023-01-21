@@ -273,6 +273,8 @@ namespace
             exit(0);
         }
 
+        cout << argv[1] << endl;
+
         
         cerr << endl << "*** loading and constructing curves and surfaces ***" << endl;
         
@@ -329,7 +331,6 @@ namespace
 
     void makeDisplayLists()
     {
-        initialize();
         gCurveLists[1] = glGenLists(1);
         gCurveLists[2] = glGenLists(1);
         gSurfaceLists[1] = glGenLists(1);
