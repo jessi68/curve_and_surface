@@ -86,9 +86,6 @@ Curve evalBezier(const vector< Vector3f >& points, unsigned steps)
             // (time * vertexMatrix * controlPoints)T = (controlPoints)T * (vertexMatrix)T * (time)T 
             vertexResult = (controlPoints * vertexMatrix * time);
 
-            cout << i << " i " << endl;
-            cout << steps << endl;
-            cout << delta << endl;
             currentIndex = steps * segment + delta;
         
             if (currentIndex >= R.size()) {
@@ -190,8 +187,6 @@ Curve evalBspline( const vector< Vector3f >& points, unsigned steps )
                 break;
             }
 
-            cout << "b spline" << endl;
-            cout << vertexResult.x() << "  y " << vertexResult.y() << " z " << vertexResult.z() << endl;
             R[currentIndex].V = vertexResult.xyz();
             R[currentIndex].T = (controlPoints * tangentMatrix * timeForTangent).normalized().xyz();
             // infection point 방지 위해 
@@ -270,8 +265,6 @@ void drawCurve( const Curve& curve, float framesize )
     glEnd();*/
 
     // Draw coordinate frames if framesize nonzero
-    cout << "framesiize" << endl;
-    cout << framesize << endl;
 
         /*for (unsigned i = 0; i < curve.size(); ++i)
         {

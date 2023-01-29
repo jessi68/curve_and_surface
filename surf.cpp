@@ -22,7 +22,7 @@ namespace
 Surface makeSurfRev(const Curve &profile, unsigned steps)
 {
     Surface surface;
-    
+    // sweep is y axis 
     if (!checkFlat(profile))
     {
         cerr << "surfRev profile curve must be flat on xy plane." << endl;
@@ -30,6 +30,12 @@ Surface makeSurfRev(const Curve &profile, unsigned steps)
     }
 
     // TODO: Here you should build the surface.  See surf.h for details.
+    int vertexSize = profile.size();
+
+    for (int i = 0; i < vertexSize; i++) {
+        //profile[i].V
+
+    }
 
     cerr << "\t>>> makeSurfRev called (but not implemented).\n\t>>> Returning empty surface." << endl;
  
@@ -80,15 +86,11 @@ void drawSurface(const Surface &surface, bool shaded)
         glLineWidth(1);
     }
 
-    glBegin(GL_TRIANGLES);
+    glBegin(GL_TRIANGLE_STRIP);
     for (unsigned i=0; i<surface.VF.size(); i++)
     {
-        glNormal(surface.VN[surface.VF[i][0]]);
-        glVertex(surface.VV[surface.VF[i][0]]);
-        glNormal(surface.VN[surface.VF[i][1]]);
-        glVertex(surface.VV[surface.VF[i][1]]);
-        glNormal(surface.VN[surface.VF[i][2]]);
-        glVertex(surface.VV[surface.VF[i][2]]);
+        glNormal(surface.VN[surface.VF[i]]);
+        glVertex(surface.VV[surface.VF[i]]);
     }
     glEnd();
 

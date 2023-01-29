@@ -9,13 +9,13 @@
 
 // This is eugene going a little nuts with C++
 template <typename TYPE, unsigned SIZE>
-class tuple
+class Tuple
 {
 public:
     
-    tuple() { }
+    Tuple() { }
 
-    tuple(TYPE first, ...)
+    Tuple(TYPE first, ...)
     {
         data[ 0 ] = first;
 
@@ -30,21 +30,21 @@ public:
         va_end( args );
     }
 
-    tuple(const TYPE array[SIZE]) {
+    Tuple(const TYPE array[SIZE]) {
         memcpy(data, array, SIZE * sizeof(TYPE));
     }
     
-    tuple(const tuple& other) {
+    Tuple(const Tuple& other) {
         memcpy(this->data, &other.data, SIZE * sizeof(TYPE));
     }
 
-    tuple& operator=(const tuple& other) {
+    Tuple& operator=(const Tuple& other) {
         if (&other != this)
             memcpy(this->data, &other.data, SIZE * sizeof(TYPE));
         return *this;
     }
     
-    tuple& operator=(const TYPE array[SIZE]) {
+    Tuple& operator=(const TYPE array[SIZE]) {
         memcpy(data, array, SIZE * sizeof(TYPE));
         return *this;
     }
